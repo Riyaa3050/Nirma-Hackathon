@@ -1,9 +1,9 @@
 import express from "express"
 import isAuthenticated from "../middlewares/Authentication.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { createCourse } from "../controllers/course.controller.js";
+import { Do_transaction } from "../controllers/transaction.controller.js";
 const router = express.Router();
 
-router.post('/add-course' ,isAuthenticated , upload.single("video") ,createCourse );
+router.post('/transaction' ,isAuthenticated , Do_transaction);
 
 export default router;
