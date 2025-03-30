@@ -49,9 +49,10 @@ const Transactions = () => {
       });
       const data = res.data.message;
       setTransactions(data);
+      console.log(transactions)
     }
     fetchHistory();
-  })
+  },[])
   
   
   return (
@@ -124,16 +125,14 @@ const Transactions = () => {
                   <TableCell>{new Date(transaction.transactionTime).toLocaleDateString()}</TableCell>
                   <TableCell>${transaction.amount.toFixed(2)}</TableCell>
                   <TableCell>
-                    <RiskBadge score={transaction.riskScore} />
+                    <RiskBadge score={transaction?.risk} />
                   </TableCell>
                   <TableCell>
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
                         ${
-                          transaction.status === "completed"
+                          transaction.type === "completed"
                             ? "bg-green-100 text-green-800"
-                            : transaction.status === "pending"
-                            ? "bg-blue-100 text-blue-800"
                             : transaction.status === "flagged"
                             ? "bg-red-100 text-red-800"
                             : "bg-gray-100 text-gray-800"

@@ -6,7 +6,6 @@ import Index from "./pages/Index";
 import { Layout } from "./components/Layout";
 import Transactions from "./pages/Transactions";
 import Alerts from "./pages/Alerts";
-import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 import UserDashboard from "./pages/UserDashboard";
 import Login from "./pages/Login";
@@ -49,14 +48,7 @@ function App() {
               </Layout>
             }
           />
-          <Route
-            path="/analytics"
-            element={
-              <Layout>
-                <Analytics />
-              </Layout>
-            }
-          />
+          
           <Route
             path="/user"
             element={

@@ -2,27 +2,40 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Check, Ban, Bell } from "lucide-react";
-
-const flaggedTransactions = [
-  {
-    id: 1,
-    receiver: "John Doe",
-    amount: 1500,
-    date: "2025-03-29",
-    purpose: "Online Purchase",
-    riskScore: 85.2,
-  },
-  {
-    id: 2,
-    receiver: "Jane Smith",
-    amount: 2200,
-    date: "2025-03-28",
-    purpose: "Fund Transfer",
-    riskScore: 90.1,
-  },
-];
+import { useEffect, useState } from "react";
+import axios from "axios";
+import BASEURL from "@/lib/Url";
 
 const Alerts = () => {
+  const [transactions, setTransactions] = useState([]);
+  const [flaggedTransactions, setFlaggedTransactions] = useState([]);
+
+  useEffect(() => {
+    async function fetchHistory() {
+      const res = await axios.get(`${BASEURL}/transaction/history`, {
+        withCredentials: true,
+      });
+      const data = res.data.message;
+      setTransactions(data);
+    }
+    fetchHistory();
+  }, []);
+
+  useEffect(() => {
+    const filteredTransactions = transactions
+    .filter(transaction => transaction.risk > 70) 
+    .map((transaction, index) => ({
+      id: index + 1,
+      receiver: transaction?.user?.name || "Unknown",
+      amount: transaction.amount,
+      date: transaction.transactionTime.split("T")[0], 
+      purpose: "Online Purchase",
+      riskScore: transaction.risk,
+    }));
+    setFlaggedTransactions(filteredTransactions);
+    // console.log(flaggedTransactions);
+  },[transactions])
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold">Alerts</h1>
@@ -56,16 +69,7 @@ const Alerts = () => {
                   <span className="font-medium">Risk Score:</span>{" "}
                   <span className="text-destructive">{transaction.riskScore.toFixed(2)}</span>
                 </div>
-                <div className="flex space-x-2 pt-2">
-                  <Button size="sm" variant="outline">
-                    <Ban className="h-4 w-4 mr-2" />
-                    Dispute
-                  </Button>
-                  <Button size="sm">
-                    <Check className="h-4 w-4 mr-2" />
-                    Confirm Safe
-                  </Button>
-                </div>
+                
               </CardContent>
             </Card>
           ))}
