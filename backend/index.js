@@ -1,8 +1,11 @@
 import express from "express"
 import authRouter from "./src/routes/auth.routes.js"
-import courseRouter from "./src/routes/course.routes.js"
+import transactionRouter from "./src/routes/transaction.routes.js"
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 const app = express();
 
@@ -17,7 +20,7 @@ app.use(cookieParser())
 
 
 app.use('/auth' , authRouter);
-app.use('/course' , courseRouter);
+app.use('/transaction' , transactionRouter);
 
 app.listen(3000 , ()=> {
     console.log("http://localhost:3000");

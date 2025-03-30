@@ -14,12 +14,19 @@ enum Role {
 
 model User {
   id           String        @id @default(uuid()) 
+  name         String       
   email        String        @unique
   password     String
   role         Role          @default(USER)
   balance      Float
+  phoneNumber  String        @unique
   transactions Transaction[]
 }
+
+
+
+
+
 
 model Transaction {
   id              String   @id @default(cuid())

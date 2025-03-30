@@ -4,26 +4,30 @@ import prisma from "../utils/prismClient.js";
 
 export const Do_transaction = async (req, res) => {
     try {
-        const { receiverId, amount } = req.body;
-        const senderId = req.user.id; // Assuming authenticated user info is stored in `req.user`
-
-        // Validate input
-        if (!receiverId || !amount) {
-            return res.status(400).json(new ApiError(400, "Receiver ID and amount are required"));
+        if (!req.user || !req.user.phoneNumber) {
+            return res.status(401).json(new ApiError(401, "Unauthorized: Please login first"));
         }
 
-        if (senderId === receiverId) {
-            return res.status(400).json(new ApiError(400, "Sender and Receiver cannot be the same"));
+        const { receiverPhone, amount } = req.body;
+        const senderPhone = req.user.phoneNumber; // Get sender's phone number from authenticated user
+
+        // Validate input
+        if (!receiverPhone || !amount) {
+            return res.status(400).json(new ApiError(400, "Receiver phone and amount are required"));
         }
 
         if (amount <= 0) {
             return res.status(400).json(new ApiError(400, "Amount must be greater than zero"));
         }
 
-        // Fetch sender and receiver details in a single query
+        if (senderPhone === receiverPhone) {
+            return res.status(400).json(new ApiError(400, "Cannot send money to yourself"));
+        }
+
+        // Fetch sender and receiver using phone numbers
         const [sender, receiver] = await Promise.all([
-            prisma.user.findUnique({ where: { id: senderId } }),
-            prisma.user.findUnique({ where: { id: receiverId } })
+            prisma.user.findUnique({ where: { phoneNumber: senderPhone } }),
+            prisma.user.findUnique({ where: { phoneNumber: receiverPhone } })
         ]);
 
         if (!sender) return res.status(404).json(new ApiError(404, "Sender not found"));
@@ -34,27 +38,24 @@ export const Do_transaction = async (req, res) => {
             return res.status(400).json(new ApiError(400, "Insufficient balance"));
         }
 
-        // Perform transaction in a database transaction to maintain atomicity
+        // Perform transaction atomically
         const transaction = await prisma.$transaction(async (prisma) => {
-            // Deduct amount from sender
             await prisma.user.update({
-                where: { id: senderId },
+                where: { phoneNumber: senderPhone },
                 data: { balance: { decrement: amount } }
             });
 
-            // Add amount to receiver
             await prisma.user.update({
-                where: { id: receiverId },
+                where: { phoneNumber: receiverPhone },
                 data: { balance: { increment: amount } }
             });
 
-            // Store transaction record
             return await prisma.transaction.create({
                 data: {
-                    receiverId,
+                    receiverId: receiver.id,
                     amount,
                     transactionTime: new Date(),
-                    userId: senderId
+                    userId: sender.id
                 }
             });
         });
@@ -62,6 +63,7 @@ export const Do_transaction = async (req, res) => {
         return res.status(200).json(new ApiResponse(200, "Transaction completed successfully", transaction));
 
     } catch (err) {
-        return res.status(500).json(new ApiError(500, err.message));
+        console.error("Transaction Error:", err);
+        return res.status(500).json(new ApiError(500, "Internal Server Error"));
     }
 };
