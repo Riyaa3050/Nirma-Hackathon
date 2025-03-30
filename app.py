@@ -1,61 +1,57 @@
 from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
+import numpy as np
+from datetime import datetime
 
 app = Flask(__name__)
 
-# Load trained model
-model = joblib.load("model.pkl")
+# Load the trained model and label encoders
+model = joblib.load("fraud_detection_model_XGBoost.pkl")  # Change as needed
+label_encoders = joblib.load("label_encoders.pkl")
 
-
-@app.route('/predict', methods=['POST'])
+@app.route("/predict", methods=["POST"])
 def predict():
     try:
-        # Get JSON data from request
         data = request.get_json()
-        print("\n🔹 Received Data:", data)  # Debugging
-
-        if not data:
-            return jsonify({"error": "No data received"}), 400
-
-        # Convert data to DataFrame
+        
+        # Convert input data into a DataFrame
         df = pd.DataFrame([data])
+        
+        # Encode categorical variables
+        for col in ['SenderID', 'ReceiverID', 'Currency', 'TransactionType']:
+            if col in label_encoders:
+                if data[col] in label_encoders[col].classes_:
+                    df[col] = label_encoders[col].transform([data[col]])[0]
+                else:
+                    # Handle unseen labels by adding to the encoder dynamically
+                    label_encoders[col].classes_ = np.append(label_encoders[col].classes_, data[col])
+                    df[col] = label_encoders[col].transform([data[col]])[0]
+        
+        # Convert Timestamp to datetime and extract features
+        df['Timestamp'] = pd.to_datetime(df['Timestamp'])
+        df['Hour'] = df['Timestamp'].dt.hour
+        df['DayOfWeek'] = df['Timestamp'].dt.dayofweek
+        df.drop(columns=['Timestamp'], inplace=True)
 
-        # Rename columns to match trained model
-        df.rename(columns={'scaled_amount': 'Amount', 'scaled_time': 'Time'}, inplace=True)
-
-        # Get expected feature order from the model
-        expected_features = model.feature_names_in_
-        print("🔹 Expected Features Order:", expected_features)  # Debugging
-
-        # Ensure all expected features are present
-        for feature in expected_features:
-            if feature not in df.columns:
-                df[feature] = df[feature].mean()  # Fill missing values with mean instead of 0
-
-        # Reorder DataFrame to match training data
-        df = df[expected_features]
-
-        print("✅ Final DataFrame Before Prediction:\n", df.head())  # Debugging
-
+        # Ensure feature order matches training
+        feature_order = ['SenderID', 'ReceiverID', 'Amount', 'Currency', 'TransactionType', 'Hour', 'DayOfWeek']
+        df = df[feature_order]
+        
         # Make prediction
-        prediction = model.predict(df)
-        prediction_proba = model.predict_proba(df)  # Get probability score
-
-        print("🔹 Model Prediction:", prediction[0])  
-        print("🔹 Prediction Probability:", prediction_proba.tolist())  # Debugging
-
-        # Adjust fraud detection threshold
-        threshold = 0.0001  # Lowered from 0.4 to 0.01
-        is_fraud = 1 if prediction_proba[0][1] > threshold else 0
-
+        fraud_prob = model.predict_proba(df)[0][1]  # Probability of fraud
+        fraud_prediction = 1 if fraud_prob > 0.5 else 0  # Adjusted threshold to 0.5
+        
         return jsonify({
-            "prediction": is_fraud, 
-            "probability": prediction_proba.tolist()
+            "fraud_prediction": int(fraud_prediction),
+            "fraud_probability": float(fraud_prob)  # Ensure JSON serialization
         })
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "Fraud Detection API is Running!"})
+
+if __name__ == "__main__":
     app.run(debug=True)
