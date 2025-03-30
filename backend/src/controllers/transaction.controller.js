@@ -2,7 +2,6 @@ import axios from "axios";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import prisma from "../utils/prismClient.js";
-
 export const Do_transaction = async (req, res) => {
   try {
     if (!req.user || !req.user.phoneNumber) {
@@ -11,13 +10,13 @@ export const Do_transaction = async (req, res) => {
         .json(new ApiError(401, "Unauthorized: Please login first"));
     }
 
-    const { receiverPhone, amount } = req.body;
+    const { receiverPhone, amount, currency, transactionType } = req.body;
     const senderPhone = req.user.phoneNumber;
 
-    if (!receiverPhone || !amount) {
+    if (!receiverPhone || !amount || !currency || !transactionType) {
       return res
         .status(400)
-        .json(new ApiError(400, "Receiver phone and amount are required"));
+        .json(new ApiError(400, "Receiver phone, amount, currency, and transaction type are required"));
     }
 
     if (amount <= 0) {
@@ -49,30 +48,29 @@ export const Do_transaction = async (req, res) => {
 
     // Prepare data for ML model
     const transactionData = {
-      SenderID: sender.id,
-      ReceiverID: receiver.id,
-      Currency: "USD", // Adjust as needed
-      TransactionType: "Online", // Adjust as needed
+      SenderID: senderPhone, 
+      ReceiverID: receiverPhone, 
+      Currency: currency, // Now coming from frontend
+      TransactionType: transactionType, // Now coming from frontend
       Amount: amount,
       Timestamp: new Date().toISOString(),
     };
 
     // Call the ML model API
     const predictionResponse = await axios.post(
-      "http://127.0.0.1:5000/predict", // Update if your API is hosted elsewhere
+      "http://127.0.0.1:5000/predict", 
       transactionData
     );
 
     let fraudProbability = predictionResponse.data.fraud_probability;
-    fraudProbability = (fraudProbability * 100).toFixed(2); // Convert to percentage with 2 digits before & 2 after decimal
+    fraudProbability = (fraudProbability).toFixed(2);
 
     const fraudPrediction = predictionResponse.data.fraud_prediction;
-    const transactionType = fraudPrediction === 1 ? "flagged" : "completed";
-
+    const transactionStatus = fraudPrediction === 1 ? "flagged" : "completed";
+  
     // Perform transaction atomically
     const transaction = await prisma.$transaction(async (prisma) => {
-      if (fraudPrediction === 0) {
-        // Only process money transfer if transaction is safe
+
         await prisma.user.update({
           where: { phoneNumber: senderPhone },
           data: { balance: { decrement: Number(amount) } },
@@ -82,16 +80,18 @@ export const Do_transaction = async (req, res) => {
           where: { phoneNumber: receiverPhone },
           data: { balance: { increment: Number(amount) } },
         });
-      }
-
+      
       return await prisma.transaction.create({
         data: {
-          receiverId: receiver.id,
+          receiverId: receiverPhone, // Stored as phone number
           amount: Number(amount),
           transactionTime: new Date(),
-          userId: sender.id,
+          userId: sender.id, // Stored as phone number
           risk: parseFloat(fraudProbability),
-          type: transactionType,
+          type: transactionStatus,
+          transactionType: transactionType, // Now dynamic from frontend
+          currency: currency, // Now dynamic from frontend
+          reason: fraudPrediction === 1 ? predictionResponse.data.fraud_reason_descriptions: [], // Pass as an array
         },
       });
     });
@@ -99,7 +99,7 @@ export const Do_transaction = async (req, res) => {
     return res
       .status(200)
       .json(
-        new ApiResponse(200, `Transaction ${transactionType} successfully`, {
+        new ApiResponse(200, `Transaction ${transactionStatus} successfully`, {
           ...transaction,
           fraud_probability: fraudProbability,
         })

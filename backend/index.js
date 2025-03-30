@@ -19,6 +19,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true })); 
 app.use(cookieParser())
 
+// await prisma.transaction.deleteMany();
 
 app.use('/auth' , authRouter);
 app.use('/transaction' , transactionRouter);
