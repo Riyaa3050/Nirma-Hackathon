@@ -23,7 +23,6 @@ export const signup = async (req , res) => {
                 role,
                 balance: 1000.0,
                 phoneNumber
-                 // Set default balance (change as needed)
             }
         });
 
