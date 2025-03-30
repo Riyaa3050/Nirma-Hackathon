@@ -38,6 +38,8 @@ export const Do_transaction = async (req, res) => {
             return res.status(400).json(new ApiError(400, "Insufficient balance"));
         }
 
+        const now = new Date();
+
         // Perform transaction atomically
         const transaction = await prisma.$transaction(async (prisma) => {
             await prisma.user.update({
@@ -50,11 +52,57 @@ export const Do_transaction = async (req, res) => {
                 data: { balance: { increment: amount } }
             });
 
+            fetch("http://127.0.0.1:5000/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    scaled_amount: amount,  
+                    scaled_time: new Date().getTime(),      
+                    "V1": -5,
+  "V2": 10,
+  "V3": 20,
+  "V4": -15,
+"V5": 30,
+  "V6": -25,
+  "V7": 5,
+  "V8": -10,
+  "V9": 15,
+  "V10": -20,
+  "V11": 25,
+  "V12": -30,
+  "V13": 35,
+  "V14": -40,
+  "V15": 45,
+  "V16": -50,
+  "V17": 55,
+  "V18": -60,
+  "V19": 65,
+  "V20": -70,
+  "V21": 75,
+  "V22": -80,
+  "V23": 85,
+  "V24": -90,
+  "V25": 95,
+  "V26": -100,
+  "V27": 105,
+  "V28": -110
+                })
+            })
+            .then(res => res.json())
+            .then(data => console.log("Prediction:", data)) 
+            .catch(err => console.error(err));
+            
+            
+            
+            
+            
+            
+
             return await prisma.transaction.create({
                 data: {
                     receiverId: receiver.id,
                     amount,
-                    transactionTime: new Date(),
+                    transactionTime: now,
                     userId: sender.id
                 }
             });
