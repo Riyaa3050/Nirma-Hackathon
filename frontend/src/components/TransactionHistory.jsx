@@ -90,11 +90,11 @@ import {
                 </TableCell>
                 <TableCell className="hidden md:table-cell font-mono text-xs">
                   {transaction.senderId === userId 
-                    ? `→ ${transaction.receiverId.substring(0, 8)}...`
-                    : `← ${transaction.senderId.substring(0, 8)}...`}
+                    ? `→ ${transaction.receiverId?.substring(0, 8)}...`
+                    : `← ${transaction.senderId?.substring(0, 8)}...`}
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  {new Date(transaction.date).toLocaleString()}
+                  {new Date(transaction.transactionTime).toLocaleString()}
                 </TableCell>
                 <TableCell>
                   {getStatusBadge(transaction.status)}

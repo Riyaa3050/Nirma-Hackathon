@@ -15,17 +15,22 @@ export function RiskBadge({ score, className }) {
         return "Medium Risk";
       case "high":
         return "High Risk";
-      default:
-        return "Unknown";
     }
   };
 
   const riskLevel = getRiskLevel(score);
-  
+
+  const riskClasses = {
+    low: "bg-green-100 text-green-700",
+    medium: "bg-yellow-100 text-yellow-700",
+    high: "bg-red-100 text-red-700",
+  };
+
   return (
     <span
       className={cn(
-        `risk-badge-${riskLevel}`,
+        "px-2 py-1 rounded-md text-xs font-semibold",
+        riskClasses[riskLevel],
         className
       )}
     >

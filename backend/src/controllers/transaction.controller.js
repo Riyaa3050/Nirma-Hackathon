@@ -70,7 +70,7 @@ export const Do_transaction = async (req, res) => {
 export const GetHistory = async (req, res) => {
     try {
       const userId = req.user.id;
-      console.log(userId)
+    //   console.log(userId)
       const history = await prisma.transaction.findMany({
         where: {
           OR: [
