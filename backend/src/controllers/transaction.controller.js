@@ -60,45 +60,45 @@ export const Do_transaction = async (req, res) => {
         where: { phoneNumber: receiverPhone },
         data: { balance: { increment: Number(amount) } },
       });
-      fetch("http://127.0.0.1:5000/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scaled_time: 169351,
-          V1: -0.67614,
-          V2: 1.126366,
-          V3: -2.2137,
-          V4: 0.468308,
-          V5: -1.12054,
-          V6: -0.00335,
-          V7: -2.23474,
-          V8: 1.210158,
-          V9: -0.65225,
-          V10: -3.46389,
-          V11: 1.794969,
-          V12: -2.77502,
-          V13: -0.41895,
-          V14: -4.05716,
-          V15: -0.71262,
-          V16: -1.60301,
-          V17: -5.03533,
-          V18: -0.507,
-          V19: 0.266272,
-          V20: 0.247968,
-          V21: 0.751826,
-          V22: 0.834108,
-          V23: 0.190944,
-          V24: 0.03207,
-          V25: -0.73969,
-          V26: 0.471111,
-          V27: 0.385107,
-          V28: 0.194361,
-          scaled_amount: 77.89
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => console.log("Prediction:", data))
-        .catch((err) => console.error(err));
+      // fetch("http://127.0.0.1:5000/predict", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({
+      //     scaled_time: 169351,
+      //     V1: -0.67614,
+      //     V2: 1.126366,
+      //     V3: -2.2137,
+      //     V4: 0.468308,
+      //     V5: -1.12054,
+      //     V6: -0.00335,
+      //     V7: -2.23474,
+      //     V8: 1.210158,
+      //     V9: -0.65225,
+      //     V10: -3.46389,
+      //     V11: 1.794969,
+      //     V12: -2.77502,
+      //     V13: -0.41895,
+      //     V14: -4.05716,
+      //     V15: -0.71262,
+      //     V16: -1.60301,
+      //     V17: -5.03533,
+      //     V18: -0.507,
+      //     V19: 0.266272,
+      //     V20: 0.247968,
+      //     V21: 0.751826,
+      //     V22: 0.834108,
+      //     V23: 0.190944,
+      //     V24: 0.03207,
+      //     V25: -0.73969,
+      //     V26: 0.471111,
+      //     V27: 0.385107,
+      //     V28: 0.194361,
+      //     scaled_amount: 77.89
+      //   }),
+      // })
+      //   .then((res) => res.json())
+      //   .then((data) => console.log("Prediction:", data))
+      //   .catch((err) => console.error(err));
       
       
       
