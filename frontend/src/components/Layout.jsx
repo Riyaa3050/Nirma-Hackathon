@@ -17,6 +17,10 @@ export function Layout({ children }) {
     navigate("/");
   };
 
+  const handleAlert = () => {
+    navigate("/alerts");
+  }
+
   return (
     <TooltipProvider>
       <SidebarProvider>
@@ -29,7 +33,7 @@ export function Layout({ children }) {
                 <h1 className="text-lg font-semibold">FraudWise Insights</h1>
               </div>
               <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon"  onClick={handleAlert}>
                   <Bell className="h-5 w-5" />
                 </Button>
                 <Button

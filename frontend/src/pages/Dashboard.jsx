@@ -1,23 +1,16 @@
-
 import { BarChart3, DollarSign, ShieldAlert, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { RiskDistributionChart } from "@/components/RiskDistributionChart";
-import { FraudTrendChart } from "@/components/FraudTrendChart";
-import { dashboardStats, mockTransactions, mockAlerts } from "@/data/mockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskBadge } from "@/components/RiskBadge";
-import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import BASEURL from "@/lib/Url";
-import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
-  // Get the most recent transactions and alerts
    const [transactions, setTransactions] = useState([]);
-   const [userId, setUserId] = useState("");
    const [transactionData , setTransactionData] = useState({
     "total": 0,
     "fraudDetected" : 0,
@@ -31,12 +24,7 @@ const Dashboard = () => {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
-  const recentAlerts = [...mockAlerts]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, 5);
-
     useEffect(() => {
-      // Check if user is logged in
       const storedUserId = user.id;
       const userRole = user.role;
   
@@ -44,10 +32,7 @@ const Dashboard = () => {
         navigate("/");
         return;
       }
-  
-      setUserId(storedUserId);
-  
-      // Load saved transactions from localStorage
+
       async function fetchHistory() {
         const res = await axios.get(`${BASEURL}/transaction/history`, {
           withCredentials: true,
@@ -118,31 +103,23 @@ const Dashboard = () => {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Fraud Trends Over Time</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FraudTrendChart />
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 ">
         <Card>
           <CardHeader>
             <CardTitle>Risk Score Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <RiskDistributionChart />
+          <RiskDistributionChart transactions={transactions} />
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-2 w-[85%] ml-20">
+      <div className="grid gap-2 ">
         <Card>
           <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-20">
             <div className="space-y-4">
               {recentTransactions.map((transaction) => (
                 <div
