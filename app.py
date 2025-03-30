@@ -13,10 +13,10 @@ feature_order = joblib.load("feature_order.pkl")
 
 # Fraud reason dictionary
 FRAUD_REASON_DICT = {
-    1: "Large transaction (above $100K)",
+    1: "Large transaction",
     2: "Unseen currency or transaction type",
     3: "Self-transaction (Sender = Receiver)",
-    4: "Late-night transaction (12AM - 4AM)",
+    4: "Late-night transaction",
     5: "High-risk transaction type"
 }
 
@@ -64,8 +64,10 @@ def predict():
         if df["LargeAmountFlag"].iloc[0] == 1:
             fraud_reasons.append(1)
 
-
+        # Ensure feature order matches training
+        print("🔄 Before Ordering:", df.columns)  # Debugging
         df = df[feature_order]
+        print("✅ After Ordering:", df.columns)  # Debugging
 
         # Make prediction
         fraud_prob = float(model.predict_proba(df)[0][1])
