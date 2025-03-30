@@ -12,6 +12,11 @@ enum Role {
   ADMIN
 }
 
+enum Type {
+  completed
+  flagged
+}
+
 model User {
   id           String        @id @default(uuid()) 
   name         String       
@@ -25,9 +30,6 @@ model User {
 
 
 
-
-
-
 model Transaction {
   id              String   @id @default(cuid())
   receiverId      String
@@ -35,4 +37,6 @@ model Transaction {
   transactionTime DateTime @default(now())
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  risk            Float    @default(0)
+  type            Type     @default(completed)
 }
