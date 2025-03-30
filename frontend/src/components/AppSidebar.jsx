@@ -38,7 +38,7 @@ export function AppSidebar() {
     {
       title: "Dashboard",
       icon: Home,
-      path: "/",
+      path: "/dashboard",
     },
     {
       title: "Analytics",
