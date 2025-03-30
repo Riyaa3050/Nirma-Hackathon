@@ -42,18 +42,18 @@ export const Do_transaction = async (req, res) => {
         const transaction = await prisma.$transaction(async (prisma) => {
             await prisma.user.update({
                 where: { phoneNumber: senderPhone },
-                data: { balance: { decrement: amount } }
+                data: { balance: { decrement: Number(amount) } }
             });
 
             await prisma.user.update({
                 where: { phoneNumber: receiverPhone },
-                data: { balance: { increment: amount } }
+                data: { balance: { increment: Number(amount) } }
             });
 
             return await prisma.transaction.create({
                 data: {
                     receiverId: receiver.id,
-                    amount,
+                    amount : Number(amount),
                     transactionTime: new Date(),
                     userId: sender.id
                 }
@@ -67,3 +67,26 @@ export const Do_transaction = async (req, res) => {
         return res.status(500).json(new ApiError(500, "Internal Server Error"));
     }
 };
+export const GetHistory = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      console.log(userId)
+      const history = await prisma.transaction.findMany({
+        where: {
+          OR: [
+            { userId: userId }, 
+            { receiverId: userId }  
+          ]
+        },
+        include: {
+          user: true    
+        }
+      });
+      
+  
+      return res.status(200).json(new ApiResponse(200, "Transaction history retrieved successfully" ,history));
+    } catch (err) {
+      return res.status(500).json(new ApiError(500, "Server Error"));
+    }
+  };
+  
