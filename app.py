@@ -50,20 +50,8 @@ def predict():
                     df[col] = le.transform([data[col]])[0]
                 else:
                     print(f"⚠️ Warning: Unseen value detected for {col}: {data[col]}")
-
-                    # If value exists in training data but is missing in label encoder, add it dynamically
-                    if data[col] in df[col].unique():
-                        print(f"✅ '{data[col]}' exists in training data but missing in label encoder. Updating dynamically.")
-                        new_classes = np.append(le.classes_, data[col])
-                        le.classes_ = new_classes
-                        df[col] = le.transform([data[col]])[0]
-
-                        # Save the updated encoder for future requests
-                        joblib.dump(label_encoders, "label_encoders.pkl")
-                    else:
-                        # If truly unseen, use "UNKNOWN" encoding instead of flagging it as fraud
-                        df[col] = le.transform(["UNKNOWN"])[0]
-                        fraud_reasons.append(2)
+                    df[col] = le.transform(["UNKNOWN"])[0]  # Use "UNKNOWN" encoding
+                    fraud_reasons.append(2)
 
         # Convert Timestamp to datetime and extract features
         df["Timestamp"] = pd.to_datetime(df["Timestamp"])
@@ -71,28 +59,33 @@ def predict():
         df["DayOfWeek"] = df["Timestamp"].dt.dayofweek
         df.drop(columns=["Timestamp"], inplace=True)
 
-        # Add LargeAmountFlag before reordering
+        # Large Transaction Flag
         df["LargeAmountFlag"] = (df["Amount"] > 100000).astype(int)
         if df["LargeAmountFlag"].iloc[0] == 1:
-            fraud_reasons.append(1)  # Large transaction detected
+            fraud_reasons.append(1)
 
         # Ensure feature order matches training
+        print("🔄 Before Ordering:", df.columns)  # Debugging
         df = df[feature_order]
+        print("✅ After Ordering:", df.columns)  # Debugging
 
         # Make prediction
-        fraud_prob = float(model.predict_proba(df)[0][1])  # Convert to float
+        fraud_prob = float(model.predict_proba(df)[0][1])
 
         # Manual fraud risk adjustments
         if data["SenderID"] == data["ReceiverID"]:
-            fraud_prob = max(fraud_prob, 0.85)  # Self-transactions are very risky
-            fraud_reasons.append(3)  # Self-transaction detected
-
-        if data["Amount"] > 100000:
-            fraud_prob = min(fraud_prob + 0.10, 1.0)  # Large transactions get a boost
+            fraud_prob = max(fraud_prob, 0.85)
+            fraud_reasons.append(3)
 
         if df["Hour"].iloc[0] in [0, 1, 2, 3]:  # Late-night transactions
             fraud_prob = min(fraud_prob + 0.05, 1.0)
-            fraud_reasons.append(4)  # Late-night transaction detected
+            fraud_reasons.append(4)
+
+        # 📌 **NEW AMOUNT-BASED ADJUSTMENT**
+        if data["Amount"] < 10:  # Small transactions -> Lower fraud probability
+            fraud_prob = max(fraud_prob - 0.05, 0)
+        elif data["Amount"] > 100000:  # Large transactions -> Higher fraud probability
+            fraud_prob = min(fraud_prob + 0.10, 1.0)
 
         # Define fraud threshold
         fraud_threshold = 0.3
@@ -100,14 +93,15 @@ def predict():
 
         # If fraud detected but no specific reason, mark as high-risk
         if fraud_prediction == 1 and not fraud_reasons:
-            fraud_reasons.append(5)  # High-risk transaction type
+            fraud_reasons.append(5)
 
         # Get descriptions for fraud reasons
         fraud_reason_descriptions = [FRAUD_REASON_DICT[code] for code in fraud_reasons]
 
+
         return jsonify({
             "fraud_prediction": fraud_prediction,
-            "fraud_probability": round(fraud_prob * 100, 2),  
+            "fraud_probability": round(fraud_prob * 100, 2),
             "fraud_reason_descriptions": fraud_reason_descriptions
         })
 
