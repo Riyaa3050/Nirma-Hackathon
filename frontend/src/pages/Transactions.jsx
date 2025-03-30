@@ -48,7 +48,7 @@ const Transactions = () => {
     setIsAddDialogOpen(false);
     // For demo, we'd generate a new mock transaction and add it to the list
   };
-
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

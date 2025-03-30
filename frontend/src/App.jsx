@@ -8,6 +8,10 @@ import Transactions from "./pages/Transactions";
 import Alerts from "./pages/Alerts";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
+import UserDashboard from "./pages/UserDashboard";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+// import UserDashboard from "./components/UserDashboard";
 
 function App() {
   return (
@@ -16,12 +20,25 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/dashboard" 
+            element = {
+              <Layout>
+                <Dashboard />
+              </Layout>
+            }
+          />
           <Route
             path="/transactions"
             element={
               <Layout>
                 <Transactions />
               </Layout>
+            }
+          />
+          <Route 
+            path="/login"
+            element={
+              <Login />
             }
           />
           <Route
@@ -40,10 +57,17 @@ function App() {
               </Layout>
             }
           />
+          <Route
+            path="/user"
+            element={
+              // <Layout>
+                <UserDashboard />
+              // </Layout>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-      <Button>Hello</Button>
     </>
   );
 }
