@@ -50,7 +50,7 @@ const UserDashboard = () => {
 
     // Load saved transactions from localStorage
     async function fetchHistory() {
-      const res = await axios.get(`${BASEURL}/transaction/history`, {
+      const res = await axios.get(`${BASEURL}/transaction/user/history`, {
         withCredentials: true,
       });
       const data = res.data.message;

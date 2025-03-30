@@ -83,7 +83,7 @@ export const Do_transaction = async (req, res) => {
       
       return await prisma.transaction.create({
         data: {
-          receiverId: receiverPhone, // Stored as phone number
+          receiverId: receiver.id, // Stored as phone number
           amount: Number(amount),
           transactionTime: new Date(),
           userId: sender.id, // Stored as phone number
@@ -113,14 +113,8 @@ export const Do_transaction = async (req, res) => {
 export const GetHistory = async (req, res) => {
     try {
       const userId = req.user.id;
-      console.log(userId)
+      // console.log(userId)
       const history = await prisma.transaction.findMany({
-        where: {
-          OR: [
-            { userId: userId }, 
-            { receiverId: userId }  
-          ]
-        },
         include: {
           user: true    
         }
@@ -133,3 +127,25 @@ export const GetHistory = async (req, res) => {
     }
   };
   
+export const userGetHistory = async (req , res) => {
+  try {
+    const userId = req.user.id;
+    // console.log(userId)
+    const history = await prisma.transaction.findMany({
+      where: {
+        OR: [
+          { userId: userId }, 
+          { receiverId: userId }  
+        ]
+      },
+      include: {
+        user: true    
+      }
+    });
+    
+
+    return res.status(200).json(new ApiResponse(200, "Transaction history retrieved successfully" ,history));
+  } catch (err) {
+    return res.status(500).json(new ApiError(500, "Server Error"));
+  }
+}
