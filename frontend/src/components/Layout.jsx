@@ -1,12 +1,22 @@
-
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
-import { Bell } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useDispatch } from "react-redux";
+import { logout } from "@/store/userSlice";
+import { useNavigate } from "react-router-dom";
 
 export function Layout({ children }) {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/");
+  };
+
   return (
     <TooltipProvider>
       <SidebarProvider>
@@ -22,11 +32,15 @@ export function Layout({ children }) {
                 <Button variant="outline" size="icon">
                   <Bell className="h-5 w-5" />
                 </Button>
+                <Button
+                  className="bg-red-100 text-red-700 hover:text-red-800 hover:bg-red-200"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-2" /> Logout
+                </Button>
               </div>
             </header>
-            <main className="flex-1 overflow-auto p-6">
-              {children}
-            </main>
+            <main className="flex-1 overflow-auto p-6">{children}</main>
           </div>
         </div>
       </SidebarProvider>

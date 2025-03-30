@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -23,31 +23,36 @@ import { RiskBadge } from "@/components/RiskBadge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import axios from "axios";
+import BASEURL from "@/lib/Url";
 
 const Transactions = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState(null);
   const [transactions, setTransactions] = useState(mockTransactions);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
   // Filter transactions based on search query and status filter
   const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch = 
-      transaction.merchant.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transaction.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transaction.category.toLowerCase().includes(searchQuery.toLowerCase());
+      transaction?.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      transaction?.type?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter ? transaction.status === statusFilter : true;
-    
+
     return matchesSearch && matchesStatus;
   });
 
-  const handleAddTransaction = (e) => {
-    e.preventDefault();
-    // In a real app, this would send data to the backend
-    setIsAddDialogOpen(false);
-    // For demo, we'd generate a new mock transaction and add it to the list
-  };
+  useEffect(() => {
+    async function fetchHistory() {
+      const res = await axios.get(`${BASEURL}/transaction/history`, {
+        withCredentials: true,
+      });
+      const data = res.data.message;
+      setTransactions(data);
+    }
+    fetchHistory();
+  })
+  
   
   return (
     <div className="space-y-6">
@@ -58,79 +63,6 @@ const Transactions = () => {
             View and manage all transaction records.
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Transaction
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Add New Transaction</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAddTransaction}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="amount" className="text-right">
-                    Amount
-                  </Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="merchant" className="text-right">
-                    Merchant
-                  </Label>
-                  <Input id="merchant" className="col-span-3" required />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="category" className="text-right">
-                    Category
-                  </Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="shopping">Shopping</SelectItem>
-                      <SelectItem value="food">Food & Drink</SelectItem>
-                      <SelectItem value="travel">Travel</SelectItem>
-                      <SelectItem value="electronics">Electronics</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="paymentMethod" className="text-right">
-                    Payment
-                  </Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select payment method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="credit">Credit Card</SelectItem>
-                      <SelectItem value="debit">Debit Card</SelectItem>
-                      <SelectItem value="bank">Bank Transfer</SelectItem>
-                      <SelectItem value="cash">Cash</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit">Add Transaction</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
 
       <Card>
@@ -163,14 +95,8 @@ const Transactions = () => {
                   <DropdownMenuItem onClick={() => setStatusFilter("completed")}>
                     Completed
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("pending")}>
-                    Pending
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setStatusFilter("flagged")}>
                     Flagged
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("failed")}>
-                    Failed
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -181,12 +107,9 @@ const Transactions = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
+                <TableHead>Name</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Merchant</TableHead>
-                <TableHead>Category</TableHead>
                 <TableHead>Amount</TableHead>
-                <TableHead>Payment</TableHead>
                 <TableHead>Risk</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -197,12 +120,9 @@ const Transactions = () => {
                   key={transaction.id}
                   className={transaction.status === "flagged" ? "fraud-table-row-flagged" : "fraud-table-row"}
                 >
-                  <TableCell className="font-medium">{transaction.id}</TableCell>
-                  <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{transaction.merchant}</TableCell>
-                  <TableCell>{transaction.category}</TableCell>
+                  <TableCell className="font-medium">{transaction?.user?.name}</TableCell>
+                  <TableCell>{new Date(transaction.transactionTime).toLocaleDateString()}</TableCell>
                   <TableCell>${transaction.amount.toFixed(2)}</TableCell>
-                  <TableCell>{transaction.paymentMethod}</TableCell>
                   <TableCell>
                     <RiskBadge score={transaction.riskScore} />
                   </TableCell>
@@ -220,7 +140,7 @@ const Transactions = () => {
                         }
                       `}
                     >
-                      {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                      {transaction?.type?.charAt(0).toUpperCase() + transaction?.type?.slice(1)}
                     </span>
                   </TableCell>
                 </TableRow>
