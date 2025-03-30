@@ -64,10 +64,8 @@ def predict():
         if df["LargeAmountFlag"].iloc[0] == 1:
             fraud_reasons.append(1)
 
-        # Ensure feature order matches training
-        print("🔄 Before Ordering:", df.columns)  # Debugging
+
         df = df[feature_order]
-        print("✅ After Ordering:", df.columns)  # Debugging
 
         # Make prediction
         fraud_prob = float(model.predict_proba(df)[0][1])
