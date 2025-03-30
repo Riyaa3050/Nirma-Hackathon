@@ -1,76 +1,119 @@
+import axios from "axios"; 
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import prisma from "../utils/prismClient.js";
-
 export const Do_transaction = async (req, res) => {
-    try {
-        if (!req.user || !req.user.phoneNumber) {
-            return res.status(401).json(new ApiError(401, "Unauthorized: Please login first"));
-        }
+  try {
+    if (!req.user || !req.user.phoneNumber) {
+      return res
+        .status(401)
+        .json(new ApiError(401, "Unauthorized: Please login first"));
+    }
 
-        const { receiverPhone, amount } = req.body;
-        const senderPhone = req.user.phoneNumber; // Get sender's phone number from authenticated user
+    const { receiverPhone, amount, currency, transactionType } = req.body;
+    const senderPhone = req.user.phoneNumber;
 
-        // Validate input
-        if (!receiverPhone || !amount) {
-            return res.status(400).json(new ApiError(400, "Receiver phone and amount are required"));
-        }
+    if (!receiverPhone || !amount || !currency || !transactionType) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Receiver phone, amount, currency, and transaction type are required"));
+    }
 
-        if (amount <= 0) {
-            return res.status(400).json(new ApiError(400, "Amount must be greater than zero"));
-        }
+    if (amount <= 0) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Amount must be greater than zero"));
+    }
 
-        if (senderPhone === receiverPhone) {
-            return res.status(400).json(new ApiError(400, "Cannot send money to yourself"));
-        }
+    if (senderPhone === receiverPhone) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Cannot send money to yourself"));
+    }
 
-        // Fetch sender and receiver using phone numbers
-        const [sender, receiver] = await Promise.all([
-            prisma.user.findUnique({ where: { phoneNumber: senderPhone } }),
-            prisma.user.findUnique({ where: { phoneNumber: receiverPhone } })
-        ]);
+    // Fetch sender and receiver
+    const [sender, receiver] = await Promise.all([
+      prisma.user.findUnique({ where: { phoneNumber: senderPhone } }),
+      prisma.user.findUnique({ where: { phoneNumber: receiverPhone } }),
+    ]);
 
-        if (!sender) return res.status(404).json(new ApiError(404, "Sender not found"));
-        if (!receiver) return res.status(404).json(new ApiError(404, "Receiver not found"));
+    if (!sender)
+      return res.status(404).json(new ApiError(404, "Sender not found"));
+    if (!receiver)
+      return res.status(404).json(new ApiError(404, "Receiver not found"));
 
-        // Check if sender has enough balance
-        if (sender.balance < amount) {
-            return res.status(400).json(new ApiError(400, "Insufficient balance"));
-        }
+    if (sender.balance < amount) {
+      return res.status(400).json(new ApiError(400, "Insufficient balance"));
+    }
 
-        // Perform transaction atomically
-        const transaction = await prisma.$transaction(async (prisma) => {
-            await prisma.user.update({
-                where: { phoneNumber: senderPhone },
-                data: { balance: { decrement: Number(amount) } }
-            });
+    // Prepare data for ML model
+    const transactionData = {
+      SenderID: senderPhone, 
+      ReceiverID: receiverPhone, 
+      Currency: currency, // Now coming from frontend
+      TransactionType: transactionType, // Now coming from frontend
+      Amount: amount,
+      Timestamp: new Date().toISOString(),
+    };
 
-            await prisma.user.update({
-                where: { phoneNumber: receiverPhone },
-                data: { balance: { increment: Number(amount) } }
-            });
+    // Call the ML model API
+    const predictionResponse = await axios.post(
+      "http://127.0.0.1:5000/predict", 
+      transactionData
+    );
 
-            return await prisma.transaction.create({
-                data: {
-                    receiverId: receiver.id,
-                    amount : Number(amount),
-                    transactionTime: new Date(),
-                    userId: sender.id
-                }
-            });
+    let fraudProbability = predictionResponse.data.fraud_probability;
+    fraudProbability = (fraudProbability).toFixed(2);
+
+    const fraudPrediction = predictionResponse.data.fraud_prediction;
+    const transactionStatus = fraudPrediction === 1 ? "flagged" : "completed";
+  
+    // Perform transaction atomically
+    const transaction = await prisma.$transaction(async (prisma) => {
+
+        await prisma.user.update({
+          where: { phoneNumber: senderPhone },
+          data: { balance: { decrement: Number(amount) } },
         });
 
-        return res.status(200).json(new ApiResponse(200, "Transaction completed successfully", transaction));
+        await prisma.user.update({
+          where: { phoneNumber: receiverPhone },
+          data: { balance: { increment: Number(amount) } },
+        });
+      
+      return await prisma.transaction.create({
+        data: {
+          receiverId: receiverPhone, // Stored as phone number
+          amount: Number(amount),
+          transactionTime: new Date(),
+          userId: sender.id, // Stored as phone number
+          risk: parseFloat(fraudProbability),
+          type: transactionStatus,
+          transactionType: transactionType, // Now dynamic from frontend
+          currency: currency, // Now dynamic from frontend
+          reason: fraudPrediction === 1 ? predictionResponse.data.fraud_reason_descriptions: [], // Pass as an array
+        },
+      });
+    });
 
-    } catch (err) {
-        console.error("Transaction Error:", err);
-        return res.status(500).json(new ApiError(500, "Internal Server Error"));
-    }
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, `Transaction ${transactionStatus} successfully`, {
+          ...transaction,
+          fraud_probability: fraudProbability,
+        })
+      );
+  } catch (err) {
+    console.error("Transaction Error:", err);
+    return res.status(500).json(new ApiError(500, "Internal Server Error"));
+  }
 };
+
 export const GetHistory = async (req, res) => {
     try {
       const userId = req.user.id;
-    //   console.log(userId)
+      console.log(userId)
       const history = await prisma.transaction.findMany({
         where: {
           OR: [

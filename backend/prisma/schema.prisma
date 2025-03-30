@@ -39,4 +39,7 @@ model Transaction {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   risk            Float    @default(0)
   type            Type     @default(completed)
+  transactionType String
+  reason          String[]
+  currency        String
 }
