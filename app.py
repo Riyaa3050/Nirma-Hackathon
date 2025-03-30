@@ -95,7 +95,7 @@ def predict():
             fraud_reasons.append(4)  # Late-night transaction detected
 
         # Define fraud threshold
-        fraud_threshold = 0.15
+        fraud_threshold = 0.3
         fraud_prediction = 1 if fraud_prob > fraud_threshold else 0
 
         # If fraud detected but no specific reason, mark as high-risk
