@@ -4,6 +4,7 @@ import transactionRouter from "./src/routes/transaction.routes.js"
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
+import prisma from "./src/utils/prismClient.js";
 dotenv.config();
 
 

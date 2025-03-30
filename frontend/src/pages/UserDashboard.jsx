@@ -8,86 +8,71 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, ArrowRight, Clock, History, LogOut, DollarSign } from "lucide-react";
 import { TransactionHistory } from "@/components/TransactionHistory";
 import { toast } from "sonner";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "@/store/userSlice";
+import axios from "axios";
+import BASEURL from "@/lib/Url";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState("");
-  const [receiverId, setReceiverId] = useState("");
+  const [receiverPhoneNumber, setReceiverPhoneNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
-//   useEffect(() => {
-//     // Check if user is logged in
-//     const storedUserId = localStorage.getItem('userId');
-//     const userRole = localStorage.getItem('userRole');
-    
-//     if (!storedUserId || userRole !== 'user') {
-//       navigate('/demo');
-//       return;
-//     }
-    
-//     setUserId(storedUserId);
-    
-//     // Load saved transactions from localStorage
-//     const savedTransactions = localStorage.getItem('userTransactions');
-//     if (savedTransactions) {
-//       setTransactions(JSON.parse(savedTransactions));
-//     }
-//   }, [navigate]);
-
-  const generateRandomReceiverId = () => {
-    const randomId = Math.floor(100000000000 + Math.random() * 900000000000).toString();
-    setReceiverId(randomId);
-  };
+  const user = useSelector(state => state.user.user);
 
   useEffect(() => {
-    // Generate random receiver ID on initial load
-    if (!receiverId) {
-      generateRandomReceiverId();
+    // Check if user is logged in
+    const storedUserId = user.id
+    const userRole = user.role
+    
+    if (!storedUserId || userRole !== 'USER') {
+      navigate('/');
+      return;
     }
-  }, [receiverId]);
+    
+    setUserId(storedUserId);
+    
+    // Load saved transactions from localStorage
+    const savedTransactions = localStorage.getItem('userTransactions');
+    if (savedTransactions) {
+      setTransactions(JSON.parse(savedTransactions));
+    }
+  }, [navigate]);
 
-  const handleTransfer = () => {
+  const handleTransfer =async () => {
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
-
     setIsLoading(true);
-
-    // Simulate processing delay
-    setTimeout(() => {
-      const newTransaction = {
-        id: Date.now().toString(),
-        senderId: userId,
-        receiverId: receiverId,
-        amount: Number(amount),
-        date: new Date().toISOString(),
-        status: 'completed'
-      };
-
-      const updatedTransactions = [...transactions, newTransaction];
-      setTransactions(updatedTransactions);
-      
-      // Save to localStorage
-      localStorage.setItem('userTransactions', JSON.stringify(updatedTransactions));
-      
+    
+    const res = await axios.post(`${BASEURL}/transaction` ,{
+      receiverPhone : receiverPhoneNumber,
+      amount : Number(amount)
+      },
+      { withCredentials : true}
+    );
+    if(res.data.success){
       toast.success(`Successfully transferred $${amount} to recipient`);
+      const updatedTransactions = [...transactions, res.data.message];
+      setTransactions(updatedTransactions);
       setAmount("");
-      generateRandomReceiverId();
+      setReceiverPhoneNumber("");
       setIsLoading(false);
-    }, 1500);
+      {console.log(res.data.message)};
+    }
   };
 
+  const dispatch = useDispatch();
   const handleLogout = () => {
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userRole');
-    navigate('/demo');
+    dispatch(logout());
+    navigate('/');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-10 px-20">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-10">
       {/* Header */}
       <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
@@ -96,14 +81,14 @@ const UserDashboard = () => {
             <span className="font-medium">User Dashboard</span>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <Button className="bg-red-100 text-red-700 hover:text-red-800 hover:bg-red-200"  onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" /> Logout
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="container py-8">
+      <div className="container py-8 px-20">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">User Dashboard</h1>
           <p className="text-muted-foreground">
@@ -121,10 +106,10 @@ const UserDashboard = () => {
               <CardContent>
                 <div className="flex flex-col gap-4">
                   <div className="rounded-lg bg-muted p-4">
-                    <div className="text-sm text-muted-foreground">User ID</div>
+                    <div className="text-sm text-muted-foreground">User Name</div>
                     <div className="font-mono font-medium mt-1 flex items-center">
                       <User className="h-4 w-4 mr-2 text-primary" />
-                      {userId}
+                      {user.name + " - "+ user.id}
                     </div>
                   </div>
                 </div>
@@ -148,21 +133,19 @@ const UserDashboard = () => {
                     <CardDescription>Send money securely to another user</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="receiver">Recipient ID</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="receiver"
-                          value={receiverId}
-                          onChange={(e) => setReceiverId(e.target.value)}
-                          className="font-mono"
-                          disabled
-                        />
-                        <Button variant="outline" onClick={generateRandomReceiverId} type="button">
-                          Randomize
-                        </Button>
-                      </div>
+                  <div className="space-y-2">
+                  <Label htmlFor="receiver">Recipient Contact Number</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="receiver"
+                        placeholder="Contact Number"
+                        value={receiverPhoneNumber}
+                        onChange={(e) => setReceiverPhoneNumber(e.target.value)}
+                        className="font-mono"
+                      />
                     </div>
+                    </div>
+
                     
                     <div className="space-y-2">
                       <Label htmlFor="amount">Amount (USD)</Label>
