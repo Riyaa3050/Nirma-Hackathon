@@ -6,31 +6,37 @@ import jwt from "jsonwebtoken"
 
 export const signup = async (req , res) => {
     try {
-        const {name , email , password , role} = req.body;
+        const {name , email , password , role,phoneNumber} = req.body;
         let user = await prisma.user.findFirst({ where : { email }})
 
         if(user){
-            return res.status(402).json(new ApiError(402 , "User already exist"));
+            return res.status(402).json(new ApiError(402 , "User already exists"));
         }
+        
         const hashedPassword = await bcrypt.hash(password , 10);
+        
         user = await prisma.user.create({
             data : {
                 name,
                 email,
-                password : hashedPassword,
-                role
+                password: hashedPassword,
+                role,
+                balance: 1000.0,
+                phoneNumber
+                 // Set default balance (change as needed)
             }
-        })
+        });
 
         const token = jwt.sign({userId : user.id , role} , process.env.JWT_SECRET)
 
         res.cookie("token" , token)
 
-        return res.status(200).json(new ApiResponse(200 , "Signup Successfull" , user));
+        return res.status(200).json(new ApiResponse(200 , "Signup Successful" , user));
     } catch (err) {
         return res.status(500).json(new ApiError(500, err.message || "Internal Server Error"));
     }
 }
+
 
 export const loginUser = async (req , res) => {
     try{
