@@ -9,10 +9,10 @@ import { toast } from "sonner";
 const Login = () => {
   const [isSignup, setIsSignup] = useState(false);
   const [formData, setFormData] = useState({
-    name : "",
+    name: "",
     email: "",
     password: "",
-    phoneNumber: "", 
+    phoneNumber: "",
   });
 
   const navigate = useNavigate();
@@ -35,12 +35,10 @@ const Login = () => {
         withCredentials: true,
       });
 
-      // console.log(res.data);
-
       if (res.data.success) {
         dispatch(login(res.data.message));
-        res.data.message.role === "ADMIN" ? navigate('/dashboard') : navigate('/user')
-        toast.success(`Welcome ${res.data.message.name}`)
+        res.data.message.role === "ADMIN" ? navigate("/dashboard") : navigate("/user");
+        toast.success(`Welcome ${res.data.message.name}`);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "An error occurred.");
@@ -48,23 +46,31 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-        {/* Title */}
-        <h2 className="text-2xl font-semibold text-center mb-4">
-          {isSignup ? "Sign Up" : "Login"}
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-400 to-indigo-600">
+      <div className="bg-white p-8 rounded-xl shadow-xl w-96 text-center border border-gray-200">
+        <h2 className="text-3xl font-bold text-gray-700 mb-6">
+          {isSignup ? "Create an Account" : "Welcome Back"}
         </h2>
 
-
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignup && (
+            <input
+              type="text"
+              name="name"
+              placeholder="Username"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              required
+            />
+          )}
           <input
             type="email"
             name="email"
             placeholder="Email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             required
           />
           <input
@@ -73,42 +79,35 @@ const Login = () => {
             placeholder="Password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             required
           />
           {isSignup && (
-            <>
-            <input
-            type="name"
-            name="name"
-            placeholder="UserName"
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            required
-          />
             <input
               type="text"
               name="phoneNumber"
               placeholder="Mobile Number"
               value={formData.phoneNumber}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             />
-            </>
           )}
 
-          {/* Submit Button */}
-          <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">
+          <button
+            type="submit"
+            className="w-full bg-indigo-500 text-white p-3 rounded-lg font-semibold transition-transform transform hover:scale-105 hover:bg-indigo-600"
+          >
             {isSignup ? "Sign Up" : "Login"}
           </button>
         </form>
 
-        {/* Toggle Button */}
-        <p className="text-center mt-4">
-          {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
-          <button className="text-blue-500" onClick={() => setIsSignup(!isSignup)}>
+        <p className="text-gray-600 mt-4">
+          {isSignup ? "Already have an account?" : "Don't have an account?"} {" "}
+          <button
+            className="text-indigo-500 font-semibold hover:underline"
+            onClick={() => setIsSignup(!isSignup)}
+          >
             {isSignup ? "Login" : "Sign Up"}
           </button>
         </p>

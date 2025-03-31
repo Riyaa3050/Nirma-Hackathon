@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  Card, CardContent, CardDescription, CardFooter, 
-  CardHeader, CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +19,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/userSlice";
 import axios from "axios";
 import BASEURL from "@/lib/Url";
-import { CheckCircle } from "lucide-react"; 
-
+import { CheckCircle } from "lucide-react";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -47,7 +50,7 @@ const UserDashboard = () => {
       setTransactions(res.data.message);
     }
     fetchHistory();
-  }, [navigate]);
+  }, [transactions]);
 
   const handleTransfer = async () => {
     try {
@@ -82,7 +85,9 @@ const UserDashboard = () => {
       );
 
       if (res.data.success) {
-        toast.success(`Successfully transferred $${amount} ${currency} to recipient`);
+        toast.success(
+          `Successfully transferred $${amount} ${currency} to recipient`
+        );
         setTransactions([...transactions, res.data.message]);
         setAmount("");
         setReceiverPhoneNumber("");
@@ -90,7 +95,9 @@ const UserDashboard = () => {
         setTransactionType("");
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "An unexpected error occurred");
+      toast.error(
+        err.response?.data?.message || "An unexpected error occurred"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +119,10 @@ const UserDashboard = () => {
             <span className="font-medium">User Dashboard</span>
           </div>
           <div className="flex items-center gap-4">
-            <Button className="bg-red-100 text-red-700 hover:text-red-800 hover:bg-red-200" onClick={handleLogout}>
+            <Button
+              className="bg-red-100 text-red-700 hover:text-red-800 hover:bg-red-200"
+              onClick={handleLogout}
+            >
               <LogOut className="h-4 w-4 mr-2" /> Logout
             </Button>
           </div>
@@ -122,7 +132,9 @@ const UserDashboard = () => {
       <div className="container py-8 px-20">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">User Dashboard</h1>
-          <p className="text-muted-foreground">Make secure transactions and view your transaction history</p>
+          <p className="text-muted-foreground">
+            Make secure transactions and view your transaction history
+          </p>
         </div>
 
         <div className="grid gap-8 md:grid-cols-[1fr_300px]">
@@ -130,7 +142,9 @@ const UserDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Your Profile</CardTitle>
-                <CardDescription>Your unique user ID and account information</CardDescription>
+                <CardDescription>
+                  Your unique user ID and account information
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg bg-muted p-4">
@@ -147,7 +161,9 @@ const UserDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Make a Transfer</CardTitle>
-                <CardDescription>Send money securely to another user</CardDescription>
+                <CardDescription>
+                  Send money securely to another user
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -190,55 +206,61 @@ const UserDashboard = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button className="w-full bg-blue-600" onClick={handleTransfer} disabled={isLoading}>
-                  {isLoading ? "Processing..." : <>Transfer Funds <ArrowRight className="h-4 w-4 ml-2" /></>}
+                <Button
+                  className="w-full bg-blue-600"
+                  onClick={handleTransfer}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    "Processing..."
+                  ) : (
+                    <>
+                      Transfer Funds <ArrowRight className="h-4 w-4 ml-2" />
+                    </>
+                  )}
                 </Button>
               </CardFooter>
             </Card>
           </div>
 
-     
           <div>
-         
-
-<Card className="h-[64vh] overflow-y-scroll">
-  <CardHeader>
-    <CardTitle>Recent Activity</CardTitle>
-    <CardDescription>Your latest transactions</CardDescription>
-  </CardHeader>
-  <CardContent>
-    {transactions.length > 0 ? (
-      <div className="space-y-4">
-        {transactions
-        .reverse()
-          .map((transaction) => (
-            <div
-              key={transaction.id}
-              className="flex items-center gap-4 rounded-lg border p-3"
-            >
-              <div className="rounded-full bg-green-100 p-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Transfer of ${transaction.amount.toFixed(2)} {transaction.currency}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(transaction.transactionTime).toLocaleString("en-US", { hour12: true })}
-                </p>
-              </div>
-            </div>
-          ))}
-      </div>
-    ) : (
-      <div className="text-center py-6 text-muted-foreground">
-        No recent transactions
-      </div>
-    )}
-  </CardContent>
- 
-</Card>
-
+            <Card className="h-[64vh] overflow-y-scroll">
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Your latest transactions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {transactions.length > 0 ? (
+                  <div className="space-y-4">
+                    {transactions.reverse().map((transaction) => (
+                      <div
+                        key={transaction.id}
+                        className="flex items-center gap-4 rounded-lg border p-3"
+                      >
+                        <div className="rounded-full bg-green-100 p-2">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            Transfer of ${transaction.amount.toFixed(2)}{" "}
+                            {transaction.currency}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(
+                              transaction.transactionTime
+                            ).toLocaleString("en-US", { hour12: true })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    No recent transactions
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
