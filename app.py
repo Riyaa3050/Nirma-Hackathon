@@ -45,12 +45,11 @@ def predict():
             if col in label_encoders:
                 le = label_encoders[col]
 
-                # If value exists in the encoder's known classes
                 if data[col] in le.classes_:
                     df[col] = le.transform([data[col]])[0]
                 else:
                     print(f"⚠️ Warning: Unseen value detected for {col}: {data[col]}")
-                    df[col] = le.transform(["UNKNOWN"])[0]  # Use "UNKNOWN" encoding
+                    df[col] = le.transform(["UNKNOWN"])[0]
                     fraud_reasons.append(2)
 
         # Convert Timestamp to datetime and extract features
@@ -65,9 +64,7 @@ def predict():
             fraud_reasons.append(1)
 
         # Ensure feature order matches training
-        print("🔄 Before Ordering:", df.columns)  # Debugging
         df = df[feature_order]
-        print("✅ After Ordering:", df.columns)  # Debugging
 
         # Make prediction
         fraud_prob = float(model.predict_proba(df)[0][1])
@@ -81,14 +78,12 @@ def predict():
             fraud_prob = min(fraud_prob + 0.05, 1.0)
             fraud_reasons.append(4)
 
-        # 📌 **NEW AMOUNT-BASED ADJUSTMENT**
-        if data["Amount"] < 10:  # Small transactions -> Lower fraud probability
-            fraud_prob = max(fraud_prob - 0.05, 0)
-        elif data["Amount"] > 100000:  # Large transactions -> Higher fraud probability
-            fraud_prob = min(fraud_prob + 0.10, 1.0)
+        # Improved Large Transaction Adjustment
+        if data["Amount"] > 100000:
+            fraud_prob = min(fraud_prob + 0.30, 1.0)  # Increase probability more aggressively
 
         # Define fraud threshold
-        fraud_threshold = 0.3
+        fraud_threshold = 0.17
         fraud_prediction = 1 if fraud_prob > fraud_threshold else 0
 
         # If fraud detected but no specific reason, mark as high-risk
@@ -97,7 +92,6 @@ def predict():
 
         # Get descriptions for fraud reasons
         fraud_reason_descriptions = [FRAUD_REASON_DICT[code] for code in fraud_reasons]
-
 
         return jsonify({
             "fraud_prediction": fraud_prediction,
@@ -111,11 +105,9 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"message": "Fraud Detection API is Running!"})
-
 
 if __name__ == "__main__":
     app.run(debug=True)

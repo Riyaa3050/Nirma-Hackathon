@@ -166,10 +166,10 @@ export function AppSidebar() {
           <div className="flex items-center gap-3">
             <Avatar>
               <AvatarImage src="/placeholder.svg" />
-              <AvatarFallback>JD</AvatarFallback>
+              <AvatarFallback>AD</AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-xs font-medium text-sidebar-foreground">John Doe</p>
+              <p className="text-xs font-medium text-sidebar-foreground">Admin</p>
               <p className="text-xs text-sidebar-foreground/60">Administrator</p>
             </div>
           </div>
