@@ -121,7 +121,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent className="px-20">
             <div className="space-y-4">
-              {recentTransactions.map((transaction) => (
+              {recentTransactions.reverse().map((transaction) => (
                 <div
                   key={transaction.id}
                   className={`flex items-center justify-between p-3 rounded-md border ${

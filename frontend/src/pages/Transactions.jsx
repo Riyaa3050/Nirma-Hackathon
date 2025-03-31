@@ -49,7 +49,7 @@ const Transactions = () => {
       });
       const data = res.data.message;
       setTransactions(data);
-      console.log(transactions)
+      // console.log(transactions)
     }
     fetchHistory();
   },[])
@@ -116,7 +116,7 @@ const Transactions = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTransactions.map((transaction) => (
+              {filteredTransactions.reverse().map((transaction) => (
                 <TableRow
                   key={transaction.id}
                   className={transaction.status === "flagged" ? "fraud-table-row-flagged" : "fraud-table-row"}
